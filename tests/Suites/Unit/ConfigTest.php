@@ -6,6 +6,7 @@ namespace Tests\Suites\Unit;
 
 use Tests\Support\TestCase;
 use WebTheory\Config\Config;
+use WebTheory\Config\Interfaces\DeferredValueInterface;
 
 class ConfigTest extends TestCase
 {
@@ -23,15 +24,26 @@ class ConfigTest extends TestCase
 
     protected function getConfigValues(): array
     {
-        return [
+        return $this->resolveDeferredValues([
             'data' => require $this->getDataPath('/data.php')
-        ];
+        ]);
+    }
+
+    protected function resolveDeferredValues(array $config): array
+    {
+        array_walk_recursive($config, function (&$entry) {
+            $entry = $entry instanceof DeferredValueInterface
+                ? $entry->defer($this->config)
+                : $entry;
+        }, $config);
+
+        return $config;
     }
 
     /**
      * @test
      */
-    public function it_contains_provided_non_deferred_data()
+    public function it_contains_provided_data()
     {
         $this->assertEquals($this->getConfigValues(), $this->config->all());
     }
