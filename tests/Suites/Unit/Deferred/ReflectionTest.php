@@ -14,7 +14,7 @@ class ReflectionTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->reflection = new Reflection($this->getReflectionCallback());
+        $this->reflection = Reflection::from($this->getReflectionCallback());
     }
 
     protected function getReflectionCallback(): Closure

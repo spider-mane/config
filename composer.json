@@ -19,12 +19,13 @@
   "require": {
     "php": ">=7.4",
     "hassankhan/config": "^2.2",
-    "illuminate/collections": "^8.77"
+    "voku/arrayy": "^7.8"
   },
   "require-dev": {
     "captainhook/captainhook": "^5.10",
     "fakerphp/faker": "^1.16",
     "friendsofphp/php-cs-fixer": "^2.15",
+    "illuminate/collections": "^8.77",
     "mockery/mockery": "^1.4",
     "phpbench/phpbench": "@dev",
     "phpcompatibility/php-compatibility": "^9.3",

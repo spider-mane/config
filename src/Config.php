@@ -2,6 +2,8 @@
 
 namespace WebTheory\Config;
 
+use Arrayy\Arrayy;
+use Arrayy\StaticArrayy;
 use Illuminate\Support\Arr;
 use Noodlehaus\Config as NoodlehausConfig;
 use Noodlehaus\Parser\ParserInterface;
@@ -10,6 +12,14 @@ use WebTheory\Config\Interfaces\DeferredValueInterface;
 
 class Config extends NoodlehausConfig implements ConfigInterface
 {
+    protected Arrayy $arrayy;
+
+    public function __construct($values, ParserInterface $parser = null, $string = false)
+    {
+        parent::__construct($values, $parser, $string);
+        $this->resolveReflections();
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -45,8 +55,6 @@ class Config extends NoodlehausConfig implements ConfigInterface
                 $this->data = array_replace_recursive($this->data, [$entry => $parser->parseFile($path)]);
             }
         }
-
-        $this->resolveReflections();
     }
 
     protected function resolveReflections()
@@ -64,8 +72,10 @@ class Config extends NoodlehausConfig implements ConfigInterface
             return true;
         }
 
-        if ($exists = Arr::has($this->data, $key)) {
-            $this->cache[$key] = Arr::get($this->data, $key);
+        $data = new Arrayy($this->data);
+
+        if ($exists = $data->has($key)) {
+            $this->cache[$key] = $data->get($key);
         }
 
         return $exists;
