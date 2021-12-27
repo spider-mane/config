@@ -18,7 +18,8 @@
   ],
   "require": {
     "php": ">=7.4",
-    "hassankhan/config": "^2.2"
+    "hassankhan/config": "^2.2",
+    "illuminate/collections": "^8.77"
   },
   "require-dev": {
     "captainhook/captainhook": "^5.10",
@@ -64,7 +65,10 @@
   },
   "config": {
     "sort-packages": true,
-    "process-timeout": 0
+    "process-timeout": 0,
+    "allow-plugins": {
+      "composer/package-versions-deprecated": true
+    }
   },
   "minimum-stability": "dev",
   "prefer-stable": true

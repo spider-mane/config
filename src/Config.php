@@ -2,6 +2,7 @@
 
 namespace WebTheory\Config;
 
+use Illuminate\Support\Arr;
 use Noodlehaus\Config as NoodlehausConfig;
 use Noodlehaus\Parser\ParserInterface;
 use WebTheory\Config\Interfaces\ConfigInterface;
@@ -55,6 +56,19 @@ class Config extends NoodlehausConfig implements ConfigInterface
                 $entry = $entry->defer($this);
             }
         });
+    }
+
+    public function has($key)
+    {
+        if (isset($this->cache[$key])) {
+            return true;
+        }
+
+        if ($exists = Arr::has($this->data, $key)) {
+            $this->cache[$key] = Arr::get($this->data, $key);
+        }
+
+        return $exists;
     }
 
     // public function get($key, $default = null)
