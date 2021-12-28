@@ -12,8 +12,6 @@ use WebTheory\Config\Interfaces\DeferredValueInterface;
 
 class Config extends NoodlehausConfig implements ConfigInterface
 {
-    protected Arrayy $arrayy;
-
     public function __construct($values, ParserInterface $parser = null, $string = false)
     {
         parent::__construct($values, $parser, $string);
@@ -72,10 +70,8 @@ class Config extends NoodlehausConfig implements ConfigInterface
             return true;
         }
 
-        $data = new Arrayy($this->data);
-
-        if ($exists = $data->has($key)) {
-            $this->cache[$key] = $data->get($key);
+        if ($exists = Arr::has($this->data, $key)) {
+            $this->cache[$key] = Arr::get($this->data, $key);
         }
 
         return $exists;

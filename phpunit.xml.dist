@@ -6,7 +6,7 @@
   beStrictAboutCoversAnnotation="true"
   beStrictAboutOutputDuringTests="false"
   beStrictAboutTodoAnnotatedTests="true"
-  bootstrap="vendor/autoload.php"
+  bootstrap="tests/bootstrap.php"
   cacheResult="true"
   cacheResultFile="build/phpunit/.result.cache"
   colors="true"

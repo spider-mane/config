@@ -10,7 +10,10 @@ use WebTheory\Config\Interfaces\DeferredValueInterface;
 
 class ConfigTest extends TestCase
 {
-    protected Config $config;
+    /**
+     * @var Config
+     */
+    protected $config;
 
     public function setUp(): void
     {
@@ -33,7 +36,7 @@ class ConfigTest extends TestCase
     {
         array_walk_recursive($config, function (&$entry) {
             $entry = $entry instanceof DeferredValueInterface
-                ? $entry->defer($this->config)
+                ? $entry->defer(new Config($this->getDataPath()))
                 : $entry;
         }, $config);
 
@@ -50,13 +53,21 @@ class ConfigTest extends TestCase
 
     /**
      * @test
+     * @dataProvider provideItemsToGet
      */
-    public function it_retrieves_nested_data_using_dot_notation()
+    public function it_retrieves_nested_data_using_dot_notation($key, $value)
+    {
+        $this->assertEquals($value, $this->config->get($key));
+    }
+
+    public function provideItemsToGet()
     {
         $values = $this->getConfigValues();
-        $nested = $values['data']['key4']['sub1a']['sub2a'];
 
-        $this->assertEquals($nested, $this->config->get('data.key4.sub1a.sub2a'));
+        return [
+            'scalar' => ['data.key1', $values['data']['key1']],
+            'array' => ['data.key4', $values['data']['key4']]
+        ];
     }
 
     /**
