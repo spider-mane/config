@@ -16,15 +16,16 @@
     "config",
     "webtheory"
   ],
+  "minimum-stability": "dev",
+  "prefer-stable": true,
   "require": {
-    "php": ">=7.4",
-    "hassankhan/config": "^2.2",
-    "illuminate/collections": "^8.77"
+    "php": "^7.4 || ^8.0",
+    "hassankhan/config": "^2.2"
   },
   "require-dev": {
     "captainhook/captainhook": "^5.10",
     "fakerphp/faker": "^1.16",
-    "friendsofphp/php-cs-fixer": "^2.15",
+    "friendsofphp/php-cs-fixer": "^3.3",
     "mockery/mockery": "^1.4",
     "oscarotero/env": "^2.1",
     "phpbench/phpbench": "@dev",
@@ -37,7 +38,6 @@
     "symfony/var-dumper": "^5.4",
     "vimeo/psalm": "^4.7",
     "vlucas/phpdotenv": "^5.4",
-    "voku/arrayy": "^7.8",
     "webtheory/exterminate": "@stable"
   },
   "autoload": {
@@ -54,18 +54,23 @@
     "test": "vendor/bin/phpunit",
     "watch": "vendor/bin/phpunit-watcher",
     "check": "vendor/bin/phpcs",
-    "fix": "vendor/bin/php-cs-fixer",
+    "fix": "vendor/bin/phpcbf",
+    "style": "vendor/bin/php-cs-fixer fix --verbose",
     "inspect": "vendor/bin/psalm",
     "bench": "vendor/bin/phpbench",
     "shell": "vendor/bin/psysh",
     "collect": "vendor/bin/var-dump-server",
     "hooks": "vendor/bin/captainhook",
-    "env": "cp -n .env.example .env",
     "build": [
       "@fix",
       "@check",
       "@inspect",
       "@test"
+    ],
+    "setup": [
+      "composer update",
+      "cp -n .env.example .env",
+      "bin/build-paths"
     ]
   },
   "config": {
@@ -75,6 +80,13 @@
       "composer/package-versions-deprecated": true
     }
   },
-  "minimum-stability": "dev",
-  "prefer-stable": true
+  "extra": {
+    "build-paths": {
+      "build": {
+        "phpunit": {},
+        "php-cs-fixer": {}
+      },
+      "logs": {}
+    }
+  }
 }

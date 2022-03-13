@@ -5,13 +5,13 @@ use PhpCsFixer\Finder;
 
 $finder = Finder::create()
   ->in(['src', 'tests'])
-  ->exclude(['bin', 'vendor', 'assets'])
+  ->exclude(['assets', 'bin', 'build', 'config', 'vendor', 'wordpress'])
   ->name('*.php')
   ->ignoreDotFiles(true)
   ->ignoreVCS(true);
 
-return (new Config(':package_name'))
-  ->setCacheFile(__DIR__ . '/build/phpcs/.cache')
+return (new Config('leonidas'))
+  ->setCacheFile(__DIR__ . '/build/php-cs-fixer/.cache')
   ->setFinder($finder)
   ->setRules([
     '@PSR12' => true,
@@ -39,6 +39,8 @@ return (new Config(':package_name'))
     'method_argument_space' => [
       'after_heredoc' => true,
     ],
+    'no_empty_phpdoc' => true,
+    'no_extra_blank_lines' => true,
     'no_unused_imports' => true,
     'not_operator_with_space' => false,
     'not_operator_with_successor_space' => false,
@@ -51,9 +53,10 @@ return (new Config(':package_name'))
     ],
     'phpdoc_single_line_var_spacing' => true,
     'phpdoc_var_without_name' => true,
+    'single_blank_line_at_eof' => true,
     'single_space_after_construct' => true,
     'ternary_to_null_coalescing' => true,
-    'trailing_comma_in_multiline_array' => true,
+    'trailing_comma_in_multiline' => true,
     'trim_array_spaces' => true,
     'unary_operator_spaces' => true,
   ]);

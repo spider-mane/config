@@ -28,7 +28,7 @@ class ConfigTest extends TestCase
     protected function getConfigValues(): array
     {
         return $this->resolveDeferredValues([
-            'data' => require $this->getDataPath('/data.php')
+            'data' => require $this->getDataPath('/data.php'),
         ]);
     }
 
@@ -53,20 +53,20 @@ class ConfigTest extends TestCase
 
     /**
      * @test
-     * @dataProvider provideItemsToGet
+     * @dataProvider dotNotationItems
      */
     public function it_retrieves_nested_data_using_dot_notation($key, $value)
     {
         $this->assertEquals($value, $this->config->get($key));
     }
 
-    public function provideItemsToGet()
+    public function dotNotationItems()
     {
         $values = $this->getConfigValues();
 
         return [
-            'scalar' => ['data.key1', $values['data']['key1']],
-            'array' => ['data.key4', $values['data']['key4']]
+            'scalar' => ['data.scalar', $values['data']['scalar']],
+            'array' => ['data.array', $values['data']['array']],
         ];
     }
 
@@ -76,8 +76,8 @@ class ConfigTest extends TestCase
     public function it_can_retrieve_from_a_cascade_of_keys_without_error()
     {
         $values = $this->getConfigValues();
-        $nested = $values['data']['key4']['sub1a']['sub2a'];
-        $cascade = ['data.key4.sub1a.sub2a.sub3a', 'data.key4.sub1a.sub2a'];
+        $nested = $values['data']['array']['sub1a']['sub2a'];
+        $cascade = ['data.array.sub1a.sub2a.sub3a', 'data.array.sub1a.sub2a'];
 
         foreach ($cascade as $key) {
             if ($this->config->has($key)) {
@@ -87,5 +87,13 @@ class ConfigTest extends TestCase
                 $this->assertEquals($cascade[0], $key);
             }
         }
+    }
+
+    /**
+     * @test
+     */
+    public function it_returns_an_array_when_requested_value_is_an_array()
+    {
+        $this->assertIsArray($this->config->get('data.array'));
     }
 }

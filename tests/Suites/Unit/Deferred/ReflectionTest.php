@@ -10,6 +10,7 @@ use WebTheory\Config\Interfaces\ConfigInterface;
 class ReflectionTest extends TestCase
 {
     protected Reflection $reflection;
+
     protected ConfigInterface $stubConfig;
 
     protected function setUp(): void

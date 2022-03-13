@@ -2,9 +2,6 @@
 
 namespace WebTheory\Config;
 
-use Arrayy\Arrayy;
-use Arrayy\StaticArrayy;
-use Illuminate\Support\Arr;
 use Noodlehaus\Config as NoodlehausConfig;
 use Noodlehaus\Parser\ParserInterface;
 use WebTheory\Config\Interfaces\ConfigInterface;
@@ -70,8 +67,8 @@ class Config extends NoodlehausConfig implements ConfigInterface
             return true;
         }
 
-        if ($exists = Arr::has($this->data, $key)) {
-            $this->cache[$key] = Arr::get($this->data, $key);
+        if ($exists = ArraySeeker::has($this->data, $key)) {
+            $this->cache[$key] = ArraySeeker::get($this->data, $key);
         }
 
         return $exists;
