@@ -20,12 +20,14 @@
   "prefer-stable": true,
   "require": {
     "php": "^7.4 || ^8.0",
-    "hassankhan/config": "^2.2"
+    "hassankhan/config": "^3.0"
   },
   "require-dev": {
     "captainhook/captainhook": "^5.10",
+    "dflydev/dot-access-data": "^3.0",
     "fakerphp/faker": "^1.16",
     "friendsofphp/php-cs-fixer": "^3.3",
+    "league/config": "^1.1",
     "mockery/mockery": "^1.4",
     "oscarotero/env": "^2.1",
     "phpbench/phpbench": "@dev",
