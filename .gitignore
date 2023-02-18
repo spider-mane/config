@@ -4,20 +4,21 @@
 /dist/
 /logs/
 cghooks.lock
-docker-compose.override.yml
 
 # Composer
 /vendor/
 composer.lock
+/studio.json
+
+# Docker
+docker-compose.override.yml
+/docker/@*/
 
 # Env
 *.env
 .env.*
-.*.env
-!.env.example
+!*.env.example
 !.env.*.example
-!.example.env
-!example.env
 
 # Editor/ IDE
 *.code-workspace

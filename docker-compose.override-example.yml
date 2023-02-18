@@ -1,0 +1,22 @@
+services:
+  app:
+    build:
+      target: app-interactive
+      args:
+        LANG: "${LANG}"
+        TZ: 'America/New_York'
+        UNMINIMIZE: true
+        GIT_DEFAULT_BRANCH: master
+        GIT_USER: "Chris Williams"
+        GIT_EMAIL: "spider.mane.web@gmail.com"
+    environment:
+      TERM: "${TERM}"
+      # ZSH_THEME: robbyrussell
+    volumes:
+      # App
+      - ".:/var/www/html"
+      # Dependencies
+      - "app.composer:/var/www/html/vendor"
+volumes:
+  app.composer:
+    driver: local

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+if [ ! -d /.composer ]; then
+  mkdir /.composer
+fi
+
+chmod -R ugo+rw /.composer
+
+if [ ! -f "$APP/vendor/autoload.php" ]; then
+  composer run -d "$APP" setup
+fi
+
+if [ $# -gt 0 ]; then
+  exec "$@"
+else
+  exec sleep infinity
+fi
