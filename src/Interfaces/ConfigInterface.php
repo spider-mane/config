@@ -2,9 +2,13 @@
 
 namespace WebTheory\Config\Interfaces;
 
-use Noodlehaus\ConfigInterface as NoodlehausConfigInterface;
-
-interface ConfigInterface extends NoodlehausConfigInterface
+interface ConfigInterface
 {
-    //
+    public function get(string $key, $default = null): mixed;
+
+    public function set(string $key, $value): void;
+
+    public function has(string $key): bool;
+
+    public function all(): array;
 }

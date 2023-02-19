@@ -2,101 +2,120 @@
 
 namespace WebTheory\Config;
 
-use Noodlehaus\Config as NoodlehausConfig;
-use Noodlehaus\Parser\ParserInterface;
+use Dflydev\DotAccessData\Data;
+use Dflydev\DotAccessData\DataInterface;
+use DirectoryIterator;
 use WebTheory\Config\Interfaces\ConfigInterface;
 use WebTheory\Config\Interfaces\DeferredValueInterface;
 
-class Config extends NoodlehausConfig implements ConfigInterface
+class Config implements ConfigInterface
 {
-    public function __construct($values, ParserInterface $parser = null, $string = false)
+    protected string $path;
+
+    protected DataInterface $data;
+
+    protected array $cache = [];
+
+    public function __construct(string $path)
     {
-        parent::__construct($values, $parser, $string);
-        $this->resolveReflections();
+        $this->path = $path;
+        $this->data = new Data();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    protected function loadFromFile($path, ParserInterface $parser = null)
+    public function __debugInfo()
     {
-        $paths = $this->getValidPath($path);
-        $this->data = [];
+        return [
+            'cached' => $this->cache,
+            'data' => $this->data->export(),
+            'resolved' => $this->all(),
+        ];
+    }
 
-        foreach ($paths as $path) {
-            // Get file information
-            $info = pathinfo($path);
-            $parts = explode('.', $info['basename']);
-            $entry = preg_replace("/[^A-Za-z0-9 ]/", '_', $parts[0]);
+    public function set(string $key, $value): void
+    {
+        $this->data->set($key, $value);
+        $this->cache[$key] = $value;
+    }
 
-            if ($parser === null) {
-                $extension = array_pop($parts);
-
-                // Skip the `dist` extension
-                if ($extension === 'dist') {
-                    $extension = array_pop($parts);
-                }
-
-                // Get file parser
-                $parser = $this->getParser($extension);
-
-                // Try to load file
-                $this->data = array_replace_recursive($this->data, [$entry => $parser->parseFile($path)]);
-
-                // Clean parser
-                $parser = null;
-            } else {
-                // Try to load file using specified parser
-                $this->data = array_replace_recursive($this->data, [$entry => $parser->parseFile($path)]);
-            }
+    public function get(string $key, $default = null): mixed
+    {
+        if ($this->hasCachedData($key)) {
+            return $this->cache[$key];
         }
+
+        $this->ensureBaseIsLoaded($key);
+
+        if (!$this->data->has($key)) {
+            return $default;
+        }
+
+        $value = $this->maybeResolveValue($this->data->get($key));
+
+        return $this->cache[$key] = is_array($value)
+            ? $this->fullyResolveArray($value)
+            : $value;
     }
 
-    protected function resolveReflections()
+    public function has(string $key): bool
     {
-        array_walk_recursive($this->data, function (&$entry) {
-            if ($entry instanceof DeferredValueInterface) {
-                $entry = $entry->defer($this);
-            }
-        });
-    }
-
-    public function has($key)
-    {
-        if (isset($this->cache[$key])) {
+        if ($this->hasCachedData($key)) {
             return true;
         }
 
-        if ($exists = ArraySeeker::has($this->data, $key)) {
-            $this->cache[$key] = ArraySeeker::get($this->data, $key);
-        }
+        $this->ensureBaseIsLoaded($key);
 
-        return $exists;
+        return $this->data->has($key);
     }
 
-    // public function get($key, $default = null)
-    // {
-    //     if ($this->has($key)) {
-    //         $this->resolveDeferredValues($key, $this->cache[$key]);
+    public function all(): array
+    {
+        foreach (new DirectoryIterator($this->path) as $file) {
+            if (
+                'php' === $file->getExtension()
+                && !$this->data->has($base = $file->getBasename('.php'))
+            ) {
+                $this->data->set($base, require $file->getPathname());
+            }
+        }
 
-    //         return $this->cache[$key];
-    //     }
+        return $this->fullyResolveArray($this->data->export());
+    }
 
-    //     return $default;
-    // }
+    protected function hasCachedData(string $key): bool
+    {
+        return array_key_exists($key, $this->cache);
+    }
 
-    // protected function resolveDeferredValues($key, &$value)
-    // {
-    //     if ($value instanceof DeferredValueInterface) {
-    //         $value = $value->defer($this);
-    //     }
+    protected function fullyResolveArray(array $values): array
+    {
+        array_walk_recursive(
+            $values,
+            fn (&$item) => $item = $this->maybeResolveValue($item)
+        );
 
-    //     if (is_array($value)) {
-    //         foreach ($value as $nested => &$value) {
-    //             $this->resolveDeferredValues("$key.$nested", $value);
-    //         }
-    //     }
+        return $values;
+    }
 
-    //     $this->resolved[] = $key;
-    // }
+    protected function maybeResolveValue($value): mixed
+    {
+        if ($value instanceof DeferredValueInterface) {
+            $value = $value->resolve($this);
+        }
+
+        return $value;
+    }
+
+    protected function ensureBaseIsLoaded(string $key): void
+    {
+        $parts = explode('.', str_replace('/', '.', $key));
+        $base = $parts[0];
+
+        if (!$this->data->has($base)) {
+            $file = "{$this->path}/{$base}.php";
+
+            if (file_exists($file)) {
+                $this->data->set($base, (require $file));
+            }
+        }
+    }
 }

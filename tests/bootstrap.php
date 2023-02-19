@@ -1,6 +1,7 @@
 <?php
 
 use Dotenv\Dotenv;
+
 use function Env\env;
 
 use WebTheory\Exterminate\Exterminator;
@@ -14,7 +15,7 @@ Dotenv::createUnsafeImmutable($root)->load();
 Exterminator::debug([
     'enable' => env('DEBUG_ENABLE') ?? true,
     'display' => env('DEBUG_DISPLAY') ?? true,
-    'log' => "$root/logs/pseudo-package.log",
+    'log' => "$root/logs/config.log",
     'system' => [
         'host_os' => env('HOST_OS'),
         'host_path' => env('HOST_PATH'),

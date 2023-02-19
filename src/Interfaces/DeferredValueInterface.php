@@ -4,5 +4,5 @@ namespace WebTheory\Config\Interfaces;
 
 interface DeferredValueInterface
 {
-    public function defer(ConfigInterface $config);
+    public function resolve(ConfigInterface $config);
 }

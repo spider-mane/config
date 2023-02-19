@@ -20,13 +20,13 @@ class Reflection implements DeferredValueInterface
 
     public function __invoke(ConfigInterface $config)
     {
-        return $this->defer($config);
+        return $this->resolve($config);
     }
 
     /**
      * Returns the value of the properties sought by the instance
      */
-    public function defer(ConfigInterface $config)
+    public function resolve(ConfigInterface $config)
     {
         return $this->closure->call($config);
     }

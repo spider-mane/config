@@ -1,7 +1,7 @@
 {
   "name": "webtheory/config",
   "type": "library",
-  "description": "Config with support for deferred entries",
+  "description": "Directory based configuration with support for lazy resolution of entries",
   "homepage": "https://github.com/spider-mane/config",
   "license": "MIT",
   "authors": [
@@ -19,28 +19,27 @@
   "minimum-stability": "dev",
   "prefer-stable": true,
   "require": {
-    "php": "^7.4 || ^8.0",
-    "hassankhan/config": "^3.0"
+    "php": "^8.0",
+    "dflydev/dot-access-data": "^3.0"
   },
   "require-dev": {
     "captainhook/captainhook": "^5.10",
-    "dflydev/dot-access-data": "^3.0",
     "fakerphp/faker": "^1.16",
     "friendsofphp/php-cs-fixer": "^3.3",
-    "league/config": "^1.1",
+    "hassankhan/config": "^3.0",
+    "league/config": "^1.2",
     "mockery/mockery": "^1.4",
     "oscarotero/env": "^2.1",
     "phpbench/phpbench": "@dev",
     "phpcompatibility/php-compatibility": "^9.3",
-    "phpstan/phpstan": "^0.12.83",
+    "phpstan/phpstan": "^1.9",
     "phpunit/phpunit": "^9.5",
-    "psy/psysh": "^0.10.7",
+    "psy/psysh": "^0.11.12",
     "spatie/phpunit-watcher": "^1.12",
     "squizlabs/php_codesniffer": "^3.5",
-    "symfony/var-dumper": "^5.4",
-    "vimeo/psalm": "^4.7",
+    "vimeo/psalm": "^5.6",
     "vlucas/phpdotenv": "^5.4",
-    "webtheory/exterminate": "@stable"
+    "webtheory/exterminate": "@dev"
   },
   "autoload": {
     "psr-4": {
@@ -54,7 +53,7 @@
   },
   "scripts": {
     "test": "vendor/bin/phpunit",
-    "watch": "vendor/bin/phpunit-watcher",
+    "watch": "vendor/bin/phpunit-watcher watch",
     "check": "vendor/bin/phpcs",
     "fix": "vendor/bin/phpcbf",
     "style": "vendor/bin/php-cs-fixer fix --verbose",

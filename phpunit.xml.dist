@@ -15,8 +15,8 @@
   forceCoversAnnotation="false"
   printerClass="NunoMaduro\Collision\Adapters\Phpunit\Printer"
   processIsolation="false"
-  stopOnFailure="true"
-  testdox="true"
+  stopOnFailure="false"
+  testdox="false"
   verbose="true">
 
   <testsuites>
