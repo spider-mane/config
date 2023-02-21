@@ -26,7 +26,7 @@ class Reflection implements DeferredValueInterface
     /**
      * Returns the value of the properties sought by the instance
      */
-    public function resolve(ConfigInterface $config)
+    public function resolve(ConfigInterface $config): mixed
     {
         return $this->closure->call($config);
     }

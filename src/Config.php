@@ -22,25 +22,34 @@ class Config implements ConfigInterface
         $this->data = new Data();
     }
 
-    public function __debugInfo()
+    public function __debugInfo(): array
     {
+        $proxy = new static($this->path);
+
         return [
-            'cached' => $this->cache,
-            'data' => $this->data->export(),
-            'resolved' => $this->all(),
+            'path' => $this->path,
+            'data' => [
+                'cached' => $this->cache,
+                'current' => $this->data->export(),
+                'provided' => $proxy->loadAllBases()->data->export(),
+                'resolved' => $proxy->all(),
+            ],
         ];
     }
 
-    public function set(string $key, $value): void
+    public function set(string $key, mixed $value): void
     {
         $this->data->set($key, $value);
-        $this->cache[$key] = $value;
+
+        if (!($value instanceof DeferredValueInterface)) {
+            $this->updateDataCache($key, $value);
+        }
     }
 
-    public function get(string $key, $default = null): mixed
+    public function get(string $key, mixed $default = null): mixed
     {
         if ($this->hasCachedData($key)) {
-            return $this->cache[$key];
+            return $this->getCachedData($key);
         }
 
         $this->ensureBaseIsLoaded($key);
@@ -49,11 +58,7 @@ class Config implements ConfigInterface
             return $default;
         }
 
-        $value = $this->maybeResolveValue($this->data->get($key));
-
-        return $this->cache[$key] = is_array($value)
-            ? $this->fullyResolveArray($value)
-            : $value;
+        return $this->processValue($this->data->get($key), $key);
     }
 
     public function has(string $key): bool
@@ -69,16 +74,7 @@ class Config implements ConfigInterface
 
     public function all(): array
     {
-        foreach (new DirectoryIterator($this->path) as $file) {
-            if (
-                'php' === $file->getExtension()
-                && !$this->data->has($base = $file->getBasename('.php'))
-            ) {
-                $this->data->set($base, require $file->getPathname());
-            }
-        }
-
-        return $this->fullyResolveArray($this->data->export());
+        return $this->loadAllBases()->processArray($this->data->export());
     }
 
     protected function hasCachedData(string $key): bool
@@ -86,23 +82,40 @@ class Config implements ConfigInterface
         return array_key_exists($key, $this->cache);
     }
 
-    protected function fullyResolveArray(array $values): array
+    protected function getCachedData(string $key): mixed
     {
-        array_walk_recursive(
-            $values,
-            fn (&$item) => $item = $this->maybeResolveValue($item)
-        );
-
-        return $values;
+        return $this->cache[$key];
     }
 
-    protected function maybeResolveValue($value): mixed
+    protected function updateDataCache(string $key, mixed $data): void
+    {
+        if (!is_array($data)) {
+            $this->cache[$key] = $data;
+        }
+    }
+
+    protected function processValue(mixed $value, string $key): mixed
     {
         if ($value instanceof DeferredValueInterface) {
             $value = $value->resolve($this);
+        } elseif (is_array($value)) {
+            $value = $this->processArray($value, $key);
         }
 
+        $this->updateDataCache($key, $value);
+
         return $value;
+    }
+
+    protected function processArray(array $values, string $key = ''): array
+    {
+        $base = empty($key) ? $key : $key . '.';
+
+        foreach ($values as $key => &$entry) {
+            $entry = $this->processValue($entry, $base . $key);
+        }
+
+        return $values;
     }
 
     protected function ensureBaseIsLoaded(string $key): void
@@ -117,5 +130,22 @@ class Config implements ConfigInterface
                 $this->data->set($base, (require $file));
             }
         }
+    }
+
+    /**
+     * @return $this
+     */
+    protected function loadAllBases(): Config
+    {
+        foreach (new DirectoryIterator($this->path) as $file) {
+            if (
+                'php' === $file->getExtension()
+                && !$this->data->has($base = $file->getBasename('.php'))
+            ) {
+                $this->data->set($base, require $file->getPathname());
+            }
+        }
+
+        return $this;
     }
 }

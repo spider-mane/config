@@ -7,6 +7,7 @@ namespace Tests\Suites\Unit;
 use Tests\Support\Concerns\UsesTestDataTrait;
 use Tests\Support\UnitTestCase;
 use WebTheory\Config\Config;
+use WebTheory\Config\Interfaces\DeferredValueInterface;
 
 class ConfigTest extends UnitTestCase
 {
@@ -19,6 +20,22 @@ class ConfigTest extends UnitTestCase
         parent::setUp();
 
         $this->sut = new Config($this->getDataPath());
+    }
+
+    protected function getFullyResolvedConfigValues(): array
+    {
+        return $this->resolveDeferredValues($this->getConfigValues());
+    }
+
+    protected function resolveDeferredValues(array $config): array
+    {
+        array_walk_recursive($config, function (&$entry) {
+            $entry = $entry instanceof DeferredValueInterface
+                ? $entry->resolve(new Config($this->getDataPath()))
+                : $entry;
+        }, $config);
+
+        return $config;
     }
 
     /**
@@ -84,8 +101,8 @@ class ConfigTest extends UnitTestCase
      */
     public function it_can_retrieve_from_a_cascade_of_keys_without_error()
     {
-        $invalidKey = 'data.array.sub1a.sub2a.sub3a';
-        $validKey = 'data.array.sub1a.sub2a';
+        $invalidKey = 'data.array.array.scalar.sub3a';
+        $validKey = 'data.array.array.scalar';
         $cascade = [$invalidKey, $validKey];
         $expected = $this->getDataValue($validKey);
 
@@ -222,5 +239,147 @@ class ConfigTest extends UnitTestCase
                 'method' => 'all',
             ],
         ];
+    }
+
+    /**
+     * @test
+     * @dataProvider updatedArrayValueData
+     */
+    public function it_returns_an_array_with_updated_values_after_it_has_already_been_accessed(string $get, string $set)
+    {
+        # Arrange
+        $value = $this->fake->email;
+        $parts = explode('.', $set);
+        $array = implode('.', array_slice($parts, 0, -1));
+        $key = implode('.', array_slice($parts, -1));
+
+        # Act
+        $this->sut->get($get);
+        $this->sut->set($set, $value);
+
+        $result = $this->sut->get($array);
+
+        # Assert
+        $this->assertSame($value, $result[$key]);
+    }
+
+    public function updatedArrayValueData(): array
+    {
+        return [
+            'startDepth=1, updateDepth=0' => [
+                'get' => 'data.array',
+                'set' => 'data.array',
+            ],
+            'startDepth=1, updateDepth=1' => [
+                'get' => 'data.array',
+                'set' => 'data.array.scalar',
+            ],
+            'startDepth=1, updateDepth=2' => [
+                'get' => 'data.array',
+                'set' => 'data.array.array.scalar',
+            ],
+            'startDepth=2, updateDepth=0' => [
+                'get' => 'data.array.array',
+                'set' => 'data.array.array',
+            ],
+            'startDepth=2, updateDepth=1' => [
+                'get' => 'data.array.array',
+                'set' => 'data.array.array.scalar',
+            ],
+        ];
+    }
+
+    /**
+     * @test
+     */
+    public function it_returns_an_array_that_was_set_after_initiation_with_updated_values()
+    {
+        # Arrange
+        $original = $this->unique->word;
+        $updated = $this->unique->word;
+        $arrayKey = 'data.undefined';
+        $itemKey = 'key';
+        $configKey = $arrayKey . '.' . $itemKey;
+
+        $array = [
+            $itemKey => $original,
+        ];
+
+        # Act
+        $this->sut->set($arrayKey, $array);
+
+        # Smoke
+        $this->assertEquals($original, $this->sut->get($configKey));
+        $this->assertNotEquals($original, $updated);
+
+        $this->sut->set($configKey, $updated);
+        $result = $this->sut->get($arrayKey);
+
+        # Assert
+        $this->assertSame($updated, $result[$itemKey]);
+    }
+
+    /**
+     * @test
+     * @dataProvider subsequentIdenticalRequestsData
+     */
+    public function it_returns_the_same_scalar_value_for_a_key_on_subsequent_requests(string $key)
+    {
+        $request1 = $this->sut->get($key);
+        $request2 = $this->sut->get($key);
+
+        $this->assertSame($request1, $request2);
+    }
+
+    public function subsequentIdenticalRequestsData(): array
+    {
+        return [
+            'provided=scalar' => [
+                'get' => 'data.scalar',
+            ],
+            'provided=deferred' => [
+                'get' => 'data.deferred',
+            ],
+        ];
+    }
+
+    /**
+     * @test
+     */
+    public function it_returns_an_array_containing_path_string_and_data_array_of_cached_current_provided_and_resolved_as_debug_info()
+    {
+        # Arrange
+        $path = $this->getDataPath();
+
+        $base = 'debug';
+        $currentArray = [$base => $this->getDataValue($base)];
+
+        $toCache = "$base.key1";
+        $cachedArray = [$toCache => $this->getDataValue($toCache)];
+
+        $providedArray = $this->getConfigValues();
+        $resolvedArray = $this->getFullyResolvedConfigValues();
+
+        # Act
+        $this->sut->get($toCache);
+
+        $result = $this->sut->__debugInfo();
+
+        # Assert
+        $this->assertArrayHasKey('path', $result);
+        $this->assertArrayHasKey('data', $result);
+
+        $data = $result['data'];
+
+        $this->assertArrayHasKey('cached', $data);
+        $this->assertArrayHasKey('current', $data);
+        $this->assertArrayHasKey('provided', $data);
+        $this->assertArrayHasKey('resolved', $data);
+
+        $this->assertSame($path, $result['path']);
+        $this->assertSame($cachedArray, $data['cached']);
+        $this->assertSame($currentArray, $data['current']);
+        $this->assertEquals($providedArray, $data['provided']);
+        $this->assertEquals($resolvedArray, $data['resolved']);
     }
 }

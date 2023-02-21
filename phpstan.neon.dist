@@ -1,0 +1,19 @@
+includes:
+  # - phpstan-baseline.neon
+
+parameters:
+  level: 5
+  tmpDir: build/phpstan
+  reportUnmatchedIgnoredErrors: false
+
+  paths:
+    - src
+    - tests
+
+  ignoreErrors:
+    - '#^Unsafe usage of new static\(\).$#'
+    - '#^Undefined variable: \$this$#'
+    - '#^Variable \$this in PHPDoc tag \@var does not exist.$#'
+    - '#^Expression on left side of \?\? is not nullable.$#'
+    - '#^Right side of && is always true.$#'
+    - '#^Dead catch - Throwable is never thrown in the try block.$#'

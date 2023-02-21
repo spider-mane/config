@@ -3,8 +3,6 @@
 namespace Tests\Support\Concerns;
 
 use DirectoryIterator;
-use WebTheory\Config\Config;
-use WebTheory\Config\Interfaces\DeferredValueInterface;
 
 trait UsesTestDataTrait
 {
@@ -24,22 +22,6 @@ trait UsesTestDataTrait
         }
 
         return $data;
-    }
-
-    protected function getFullyResolvedConfigValues(): array
-    {
-        return $this->resolveDeferredValues($this->getConfigValues());
-    }
-
-    protected function resolveDeferredValues(array $config): array
-    {
-        array_walk_recursive($config, function (&$entry) {
-            $entry = $entry instanceof DeferredValueInterface
-                ? $entry->resolve(new Config($this->getDataPath()))
-                : $entry;
-        }, $config);
-
-        return $config;
     }
 
     protected function getDataValue(string $key, ?array $data = null)

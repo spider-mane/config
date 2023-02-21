@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Tests\Support;
 
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
+use Tests\Support\Concerns\AssertiveTrait;
 use Tests\Support\Concerns\FakerTrait;
 use Tests\Support\Concerns\HelperTrait;
 use Tests\Support\Concerns\MockeryTrait;
 
 class TestCase extends PHPUnitTestCase
 {
+    use AssertiveTrait;
     use FakerTrait;
     use HelperTrait;
     use MockeryTrait;
