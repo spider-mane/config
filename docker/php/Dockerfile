@@ -104,7 +104,8 @@ RUN composer global config --no-plugins allow-plugins.franzl/studio true \
 ARG GIT_DEFAULT_BRANCH=master
 ARG GIT_USER
 ARG GIT_EMAIL
-RUN git config --global user.name "$GIT_USER" \
+RUN git config --global --add safe.directory "$APP" \
+  && git config --global user.name "$GIT_USER" \
   && git config --global user.email "$GIT_EMAIL" \
   && git config --global credential.credentialStore gpg \
   && git config --global core.pager delta \
@@ -116,8 +117,7 @@ RUN git config --global user.name "$GIT_USER" \
   && git config --global delta.features "side-by-side line-numbers decorations"
 
 # Set up credential store
-RUN export GPG_TTY=$(tty) \
-  && gpg --quick-gen-key --no-tty --pinentry-mode loopback --passphrase '' "$GIT_USER" rsa4096 default never \
+RUN gpg --quick-gen-key --no-tty --pinentry-mode loopback --passphrase '' "$GIT_USER" rsa4096 default never \
   && pass init "$GIT_USER"
 
 # Shell config files

@@ -1,14 +1,8 @@
 #!/usr/bin/env bash
 
-if [ ! -d /.composer ]; then
-  mkdir /.composer
-fi
+composer -d "$APP" "${COMPOSER_ENTRYPOINT_SCRIPT:-install}"
 
-chmod -R ugo+rw /.composer
-
-if [ ! -f "$APP/vendor/autoload.php" ]; then
-  composer run -d "$APP" setup
-fi
+unset COMPOSER_ENTRYPOINT_SCRIPT
 
 if [ $# -gt 0 ]; then
   exec "$@"

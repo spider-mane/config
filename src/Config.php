@@ -42,7 +42,7 @@ class Config implements ConfigInterface
         $this->data->set($key, $value);
 
         if (!($value instanceof DeferredValueInterface)) {
-            $this->updateDataCache($key, $value);
+            $this->maybeUpdateCachedData($key, $value);
         }
     }
 
@@ -87,10 +87,15 @@ class Config implements ConfigInterface
         return $this->cache[$key];
     }
 
-    protected function updateDataCache(string $key, mixed $data): void
+    protected function updateCachedData(string $key, mixed $data): void
+    {
+        $this->cache[$key] = $data;
+    }
+
+    protected function maybeUpdateCachedData(string $key, mixed $data): void
     {
         if (!is_array($data)) {
-            $this->cache[$key] = $data;
+            $this->updateCachedData($key, $data);
         }
     }
 
@@ -102,7 +107,7 @@ class Config implements ConfigInterface
             $value = $this->processArray($value, $key);
         }
 
-        $this->updateDataCache($key, $value);
+        $this->maybeUpdateCachedData($key, $value);
 
         return $value;
     }
