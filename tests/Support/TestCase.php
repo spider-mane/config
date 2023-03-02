@@ -5,14 +5,12 @@ declare(strict_types=1);
 namespace Tests\Support;
 
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
-use Tests\Support\Concerns\AssertiveTrait;
 use Tests\Support\Concerns\FakerTrait;
 use Tests\Support\Concerns\HelperTrait;
 use Tests\Support\Concerns\MockeryTrait;
 
 class TestCase extends PHPUnitTestCase
 {
-    use AssertiveTrait;
     use FakerTrait;
     use HelperTrait;
     use MockeryTrait;
@@ -31,8 +29,11 @@ class TestCase extends PHPUnitTestCase
         $this->closeMockery();
     }
 
-    protected function getSupportPath(string $path = '')
+    protected static function assertArrayIsMap(array $array, string $message = ''): void
     {
-        return __DIR__ . $path;
+        static::assertFalse(
+            array_is_list($array),
+            $message ?? 'Failed asserting that array is a map.'
+        );
     }
 }

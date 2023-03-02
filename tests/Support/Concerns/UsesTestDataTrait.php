@@ -6,16 +6,18 @@ use DirectoryIterator;
 
 trait UsesTestDataTrait
 {
-    protected function getDataPath(string $file = ''): string
+    use NeedsTestFilesTrait;
+
+    protected static function getDataPath(string $file = ''): string
     {
-        return $this->getSupportPath('/data' . $file);
+        return static::getSupportPath('/data' . $file);
     }
 
-    protected function getConfigValues(): array
+    protected static function getConfigValues(): array
     {
         $data = [];
 
-        foreach (new DirectoryIterator($this->getDataPath()) as $path) {
+        foreach (new DirectoryIterator(static::getDataPath()) as $path) {
             if ($path->isFile()) {
                 $data[$path->getBasename('.php')] = require $path->getPathname();
             }
@@ -24,9 +26,9 @@ trait UsesTestDataTrait
         return $data;
     }
 
-    protected function getDataValue(string $key, ?array $data = null)
+    protected static function getDataValue(string $key, ?array $data = null)
     {
-        $data ??= $this->getConfigValues();
+        $data ??= static::getConfigValues();
 
         foreach (explode('.', $key) as $part) {
             $data = $data[$part];
@@ -35,17 +37,17 @@ trait UsesTestDataTrait
         return $data;
     }
 
-    protected function getMainConfigRoot(): string
+    protected static function getMainConfigRoot(): string
     {
         return 'data';
     }
 
-    protected function getDeferrableConfigKey(): string
+    protected static function getDeferrableConfigKey(): string
     {
         return 'data.deferred';
     }
 
-    protected function getUndefinedConfigKey(): string
+    protected static function getUndefinedConfigKey(): string
     {
         return 'data.undefined';
     }

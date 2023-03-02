@@ -20,7 +20,7 @@ trait FakerTrait
         $this->unique = $this->fake->unique(); // @phpstan-ignore-line
     }
 
-    protected function createFaker(): Generator
+    protected static function createFaker(): Generator
     {
         return Factory::create();
     }
