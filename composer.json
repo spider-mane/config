@@ -70,7 +70,7 @@
       "@test"
     ],
     "setup": [
-      "composer update",
+      "composer install",
       "cp -n .env.example .env",
       "bin/build-paths"
     ]

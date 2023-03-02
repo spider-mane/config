@@ -18,14 +18,14 @@ RUN apt-get update \
 # Install and setup PHP
 ARG PHP_VERSION=8.0
 ENV COMPOSER_ALLOW_SUPERUSER=1
-COPY docker/php/php-get /usr/local/bin
 RUN curl -sS 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x14aa40ec0831756756d7f66c4f4ea0aae5267a6c' \
   | gpg --dearmor \
   | tee /usr/share/keyrings/ppa_ondrej_php.gpg > /dev/null \
   && echo "deb [signed-by=/usr/share/keyrings/ppa_ondrej_php.gpg] https://ppa.launchpadcontent.net/ondrej/php/ubuntu jammy main" \
   > /etc/apt/sources.list.d/ppa_ondrej_php.list \
-  && apt-get update \
+  && curl -o /usr/local/bin/php-get https://gist.githubusercontent.com/spider-mane/db9cb0c880df0f6618f738961038d2f5/raw \
   && chmod +x /usr/local/bin/php-get \
+  && apt-get update \
   && php-get install "$PHP_VERSION" cli dev pgsql sqlite3 gd curl imap mysql mbstring xml zip bcmath soap intl readline ldap msgpack \
   igbinary redis swoole memcached pcov xdebug imagick \
   && setcap "cap_net_bind_service=+ep" "$(which php$PHP_VERSION)" \
@@ -36,12 +36,12 @@ RUN apt-get -y autoremove \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-COPY docker/php/etc/php.ini /etc/php/$PHP_VERSION/cli/conf.d/99-app.ini
+COPY docker/php/etc/ etc/php/$PHP_VERSION/cli/conf.d/
 
-COPY docker/php/start-container /usr/local/bin/start-container
-RUN chmod +x /usr/local/bin/start-container
+COPY docker/php/docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-ENTRYPOINT [ "start-container" ]
+ENTRYPOINT [ "docker-entrypoint.sh" ]
 
 ### Build with interactive features ###
 FROM app as app-interactive
@@ -121,17 +121,7 @@ RUN gpg --quick-gen-key --no-tty --pinentry-mode loopback --passphrase '' "$GIT_
   && pass init "$GIT_USER"
 
 # Shell config files
-COPY docker/php/etc/.bash_profile /root/.bash_profile
-COPY docker/php/etc/.bashrc /root/.bashrc
-COPY docker/php/etc/.dircolors /root/.dircolors
-COPY docker/php/etc/.p10k.zsh /root/.p10k.zsh
-COPY docker/php/etc/.profile /root/.profile
-COPY docker/php/etc/.shell_aliases /root/.shell_aliases
-COPY docker/php/etc/.shell_functions /root/.shell_functions
-COPY docker/php/etc/.shellrc /root/.shellrc
-COPY docker/php/etc/.zprofile /root/.zprofile
-COPY docker/php/etc/.zshenv /root/.zshenv
-COPY docker/php/etc/.zshrc /root/.zshrc
+COPY docker/php/~/ /root/
 
 # Cleanup
 RUN apt-get -y autoremove \
