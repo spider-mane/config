@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Suites\Unit;
 
+use Error;
 use Tests\Support\Concerns\UsesTestDataTrait;
 use Tests\Support\UnitTestCase;
 use UnexpectedValueException;
@@ -79,13 +80,33 @@ class ConfigTest extends UnitTestCase
     /**
      * @test
      */
-    public function it_throws_an_exception_if_string_value_passed_is_not_a_valid_directory()
+    public function it_can_be_instantiated_by_providing_a_filename()
     {
-        $invalidDir = 'not/a/directory';
+        $sut = new Config($this->getDataPath('/file.php'));
 
+        $result = $sut->all();
+
+        $this->assertSame($this->getDataValue('file'), $result);
+    }
+
+    /**
+     * @test
+     */
+    public function it_throws_an_error_if_file_passed_does_not_return_an_array()
+    {
+        $this->expectException(Error::class);
+
+        new Config($this->getDataPath('/invalid/notphp'));
+    }
+
+    /**
+     * @test
+     */
+    public function it_throws_an_error_if_string_value_passed_is_not_a_valid_directory()
+    {
         $this->expectException(UnexpectedValueException::class);
 
-        new Config($invalidDir);
+        new Config('not/a/directory');
     }
 
     /**

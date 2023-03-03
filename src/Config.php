@@ -17,14 +17,22 @@ class Config implements ConfigInterface
 
     protected string $path;
 
-    public function __construct(string|array $data)
+    /**
+     * @param string|array $source The source where values are to be retrieved
+     * from. May be an array, the path to a php file that returns an array, or
+     * the path to a directory containing such files.
+     */
+    public function __construct(string|array $source)
     {
-        if (is_string($data)) {
-            $this->assertValidDirectory($data);
-            $this->path = $data;
+        if (is_array($source)) {
+            $this->data = new Data($source);
+        } elseif (is_file($source)) {
+            $this->data = new Data(require $source);
+        } elseif (is_dir($source)) {
+            $this->path = $source;
             $this->data = new Data();
         } else {
-            $this->data = new Data($data);
+            $this->assertSourcePathInvalid($source);
         }
     }
 
@@ -83,13 +91,11 @@ class Config implements ConfigInterface
         return $this->loadAllBases()->processArray($this->data->export());
     }
 
-    protected function assertValidDirectory(string $dir): void
+    protected function assertSourcePathInvalid(string $path): void
     {
-        if (!is_dir($dir)) {
-            throw new UnexpectedValueException(
-                "{$dir} is not a valid directory."
-            );
-        }
+        throw new UnexpectedValueException(
+            "{$path} is not a valid filename or directory."
+        );
     }
 
     protected function hasPath(): bool
