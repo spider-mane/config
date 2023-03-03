@@ -6,6 +6,7 @@ namespace Tests\Suites\Unit;
 
 use Tests\Support\Concerns\UsesTestDataTrait;
 use Tests\Support\UnitTestCase;
+use UnexpectedValueException;
 use WebTheory\Config\Config;
 use WebTheory\Config\Interfaces\DeferredValueInterface;
 
@@ -15,7 +16,7 @@ class ConfigTest extends UnitTestCase
 
     protected Config $sut;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -44,6 +45,47 @@ class ConfigTest extends UnitTestCase
     public function it_contains_all_provided_data()
     {
         $this->assertSame($this->getFullyResolvedConfigValues(), $this->sut->all());
+    }
+
+    /**
+     * @test
+     */
+    public function it_can_be_constructed_by_providing_an_array()
+    {
+        # Arrange
+        $data = $this->getFullyResolvedConfigValues();
+        $sut = new Config($data);
+
+        # Act
+        $result = $sut->all();
+
+        # Assert
+        $this->assertSame($data, $result);
+    }
+
+    /**
+     * @test
+     */
+    public function it_returns_expected_value_for_keys_when_constructed_with_an_array()
+    {
+        $key = 'data.scalar';
+        $sut = new Config($this->getFullyResolvedConfigValues());
+
+        $result = $sut->get($key);
+
+        $this->assertSame($this->getDataValue($key), $result);
+    }
+
+    /**
+     * @test
+     */
+    public function it_throws_an_exception_if_string_value_passed_is_not_a_valid_directory()
+    {
+        $invalidDir = 'not/a/directory';
+
+        $this->expectException(UnexpectedValueException::class);
+
+        new Config($invalidDir);
     }
 
     /**

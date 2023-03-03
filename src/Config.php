@@ -5,21 +5,27 @@ namespace WebTheory\Config;
 use Dflydev\DotAccessData\Data;
 use Dflydev\DotAccessData\DataInterface;
 use DirectoryIterator;
+use UnexpectedValueException;
 use WebTheory\Config\Interfaces\ConfigInterface;
 use WebTheory\Config\Interfaces\DeferredValueInterface;
 
 class Config implements ConfigInterface
 {
-    protected string $path;
-
     protected DataInterface $data;
 
     protected array $cache = [];
 
-    public function __construct(string $path)
+    protected string $path;
+
+    public function __construct(string|array $data)
     {
-        $this->path = $path;
-        $this->data = new Data();
+        if (is_string($data)) {
+            $this->assertValidDirectory($data);
+            $this->path = $data;
+            $this->data = new Data();
+        } else {
+            $this->data = new Data($data);
+        }
     }
 
     public function __debugInfo(): array
@@ -77,6 +83,20 @@ class Config implements ConfigInterface
         return $this->loadAllBases()->processArray($this->data->export());
     }
 
+    protected function assertValidDirectory(string $dir): void
+    {
+        if (!is_dir($dir)) {
+            throw new UnexpectedValueException(
+                "{$dir} is not a valid directory."
+            );
+        }
+    }
+
+    protected function hasPath(): bool
+    {
+        return isset($this->path);
+    }
+
     protected function hasCachedData(string $key): bool
     {
         return array_key_exists($key, $this->cache);
@@ -125,6 +145,10 @@ class Config implements ConfigInterface
 
     protected function ensureBaseIsLoaded(string $key): void
     {
+        if (!$this->hasPath()) {
+            return;
+        }
+
         $parts = explode('.', str_replace('/', '.', $key));
         $base = $parts[0];
 
@@ -142,6 +166,10 @@ class Config implements ConfigInterface
      */
     protected function loadAllBases(): Config
     {
+        if (!$this->hasPath()) {
+            return $this;
+        }
+
         foreach (new DirectoryIterator($this->path) as $file) {
             if (
                 'php' === $file->getExtension()

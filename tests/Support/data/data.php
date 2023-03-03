@@ -3,13 +3,13 @@
 use WebTheory\Config\Deferred\Reflection;
 
 return [
-    'scalar' => 'value',
+    'scalar' => 'value1',
     'array' => [
-        'scalar' => 'value',
+        'scalar' => 'value2',
         'array' => [
-            'scalar' => 'value',
+            'scalar' => 'value3',
         ],
     ],
     'deferred' => Reflection::get('data.resolved'),
-    'resolved' => 'resolvedData',
+    'resolved' => 'value4',
 ];
