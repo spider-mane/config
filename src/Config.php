@@ -18,9 +18,11 @@ class Config implements ConfigInterface
     protected string $path;
 
     /**
-     * @param string|array $source The source where values are to be retrieved
-     * from. May be an array, the path to a php file that returns an array, or
-     * the path to a directory containing such files.
+     * Creates a new instance
+     *
+     * @param string|array $source The source from which values are to be
+     * retrieved. May be an array, the path of a php file that returns an array,
+     * or the path of a directory containing such files.
      */
     public function __construct(string|array $source = [])
     {
@@ -38,13 +40,19 @@ class Config implements ConfigInterface
 
     public function __debugInfo(): array
     {
-        $proxy = new static($this->path);
+        // using a proxy to extract data that requires state changing operations
+        $proxy = new static();
+        $proxy->data = new Data($stored = $this->data->export());
+
+        if ($this->hasPath()) {
+            $proxy->path = $this->path;
+        }
 
         return [
-            'path' => $this->path,
+            'path' => $this->path ?? null,
             'data' => [
                 'cached' => $this->cache,
-                'current' => $this->data->export(),
+                'stored' => $stored,
                 'provided' => $proxy->loadAllBases()->data->export(),
                 'resolved' => $proxy->all(),
             ],

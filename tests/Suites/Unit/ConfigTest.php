@@ -421,20 +421,31 @@ class ConfigTest extends UnitTestCase
 
     /**
      * @test
+     * @dataProvider debugInfoData
      */
-    public function it_returns_an_array_containing_path_string_and_data_array_of_cached_current_provided_and_resolved_as_debug_info()
-    {
+    public function it_returns_an_array_containing_path_string_and_data_array_of_cached_stored_provided_and_resolved_as_debug_info(
+        string $source
+    ) {
         # Arrange
-        $path = $this->getDataPath();
-
         $base = 'debug';
-        $currentArray = [$base => $this->getDataValue($base)];
 
         $toCache = "$base.key1";
         $cachedArray = [$toCache => $this->getDataValue($toCache)];
 
         $providedArray = $this->getConfigValues();
         $resolvedArray = $this->getFullyResolvedConfigValues();
+
+        if ('directory' === $source) {
+            $path = $this->getDataPath();
+            $storedArray = [$base => $this->getDataValue($base)];
+
+            $this->sut = new Config($path);
+        } elseif ('array' === $source) {
+            $path = null;
+            $storedArray = $this->getConfigValues();
+
+            $this->sut = new Config($storedArray);
+        }
 
         # Act
         $this->sut->get($toCache);
@@ -448,14 +459,22 @@ class ConfigTest extends UnitTestCase
         $data = $result['data'];
 
         $this->assertArrayHasKey('cached', $data);
-        $this->assertArrayHasKey('current', $data);
-        $this->assertArrayHasKey('provided', $data);
+        $this->assertArrayHasKey('stored', $data);
         $this->assertArrayHasKey('resolved', $data);
+        $this->assertArrayHasKey('provided', $data);
 
         $this->assertSame($path, $result['path']);
         $this->assertSame($cachedArray, $data['cached']);
-        $this->assertSame($currentArray, $data['current']);
+        $this->assertSame($storedArray, $data['stored']);
         $this->assertEquals($providedArray, $data['provided']);
         $this->assertEquals($resolvedArray, $data['resolved']);
+    }
+
+    public function debugInfoData(): array
+    {
+        return [
+            'source=directory' => ['directory'],
+            'source=array' => ['array'],
+        ];
     }
 }
