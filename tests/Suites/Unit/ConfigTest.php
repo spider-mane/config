@@ -51,6 +51,19 @@ class ConfigTest extends UnitTestCase
     /**
      * @test
      */
+    public function it_defaults_to_an_empty_array_when_instantiated_without_providing_a_value()
+    {
+        $sut = new Config();
+
+        $result = $sut->all();
+
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
+    }
+
+    /**
+     * @test
+     */
     public function it_can_be_constructed_by_providing_an_array()
     {
         # Arrange

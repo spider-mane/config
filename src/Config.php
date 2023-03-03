@@ -22,7 +22,7 @@ class Config implements ConfigInterface
      * from. May be an array, the path to a php file that returns an array, or
      * the path to a directory containing such files.
      */
-    public function __construct(string|array $source)
+    public function __construct(string|array $source = [])
     {
         if (is_array($source)) {
             $this->data = new Data($source);
