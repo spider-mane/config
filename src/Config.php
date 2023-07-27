@@ -4,7 +4,7 @@ namespace WebTheory\Config;
 
 use Dflydev\DotAccessData\Data;
 use Dflydev\DotAccessData\DataInterface;
-use DirectoryIterator;
+use FilesystemIterator;
 use UnexpectedValueException;
 use WebTheory\Config\Interfaces\ConfigInterface;
 use WebTheory\Config\Interfaces\DeferredValueInterface;
@@ -29,7 +29,7 @@ class Config implements ConfigInterface
         if (is_array($source)) {
             $this->data = new Data($source);
         } elseif (is_file($source)) {
-            $this->data = new Data(require $source);
+            $this->data = new Data($this->require($source));
         } elseif (is_dir($source)) {
             $this->path = $source;
             $this->data = new Data();
@@ -89,9 +89,7 @@ class Config implements ConfigInterface
             return true;
         }
 
-        $this->ensureBaseIsLoaded($key);
-
-        return $this->data->has($key);
+        return $this->ensureBaseIsLoaded($key)->data->has($key);
     }
 
     public function all(): array
@@ -157,42 +155,57 @@ class Config implements ConfigInterface
         return $values;
     }
 
-    protected function ensureBaseIsLoaded(string $key): void
-    {
-        if (!$this->hasPath()) {
-            return;
-        }
-
-        $parts = explode('.', str_replace('/', '.', $key));
-        $base = $parts[0];
-
-        if (!$this->data->has($base)) {
-            $file = "{$this->path}/{$base}.php";
-
-            if (file_exists($file)) {
-                $this->data->set($base, (require $file));
-            }
-        }
-    }
-
     /**
      * @return $this
      */
-    protected function loadAllBases(): Config
+    protected function ensureBaseIsLoaded(string $key): static
     {
         if (!$this->hasPath()) {
             return $this;
         }
 
-        foreach (new DirectoryIterator($this->path) as $file) {
-            if (
-                'php' === $file->getExtension()
-                && !$this->data->has($base = $file->getBasename('.php'))
-            ) {
-                $this->data->set($base, require $file->getPathname());
+        $parts = explode('.', str_replace('/', '.', $key));
+        $base = $parts[0];
+        $file = "{$this->path}/{$base}.php";
+
+        if (!$this->data->has($base) && file_exists($file)) {
+            $this->setFromFile($base, $file);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    protected function loadAllBases(): static
+    {
+        if (!$this->hasPath()) {
+            return $this;
+        }
+
+        foreach (new FilesystemIterator($this->path) as $file) {
+            $base = $file->getBasename('.php');
+
+            if ('php' === $file->getExtension() && !$this->data->has($base)) {
+                $this->setFromFile($base, $file->getPathname());
             }
         }
 
         return $this;
+    }
+
+    protected function setFromFile(string $key, string $file): void
+    {
+        $this->set($key, $this->require($file));
+    }
+
+    protected function require(string $file): mixed
+    {
+        static $enclose;
+
+        $enclose ??= static fn ($__file) => require $__file;
+
+        return $enclose($file);
     }
 }
