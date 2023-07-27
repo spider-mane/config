@@ -41,10 +41,16 @@
     "vlucas/phpdotenv": "^5.4",
     "webtheory/exterminate": "@dev"
   },
+  "suggest": {
+    "oscarotero/env": "Needed to use env function with \"$default\" parameter"
+  },
   "autoload": {
     "psr-4": {
       "WebTheory\\Config\\": "src/"
-    }
+    },
+    "files": [
+      "src/helpers.php"
+    ]
   },
   "autoload-dev": {
     "psr-4": {
@@ -56,23 +62,23 @@
     "test": "vendor/bin/phpunit",
     "watch": "vendor/bin/phpunit-watcher watch",
     "check": "vendor/bin/phpcs",
-    "fix": "vendor/bin/phpcbf",
-    "style": "vendor/bin/php-cs-fixer fix --verbose",
-    "inspect": "vendor/bin/psalm",
     "bench": "vendor/bin/phpbench",
     "shell": "vendor/bin/psysh",
     "collect": "vendor/bin/var-dump-server",
     "hooks": "vendor/bin/captainhook",
     "build": [
-      "@fix",
       "@check",
-      "@inspect",
+      "@analyze",
       "@test"
     ],
     "setup": [
       "composer install",
       "cp -n .env.example .env",
       "bin/build-paths"
+    ],
+    "style": [
+      "vendor/bin/php-cs-fixer fix --verbose",
+      "vendor/bin/phpcbf"
     ]
   },
   "config": {
