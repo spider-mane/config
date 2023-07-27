@@ -33,7 +33,7 @@ class TestCase extends PHPUnitTestCase
     {
         static::assertFalse(
             array_is_list($array),
-            $message ?? 'Failed asserting that array is a map.'
+            $message ?: 'Failed asserting that array is a map.'
         );
     }
 }

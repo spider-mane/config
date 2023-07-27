@@ -2,31 +2,46 @@
 
 namespace Tests\Support\Concerns;
 
-use DirectoryIterator;
+use Tests\Support\Doubles\ConfigStub;
+use Tests\Support\Doubles\DeferredValueStub;
+use WebTheory\Config\Interfaces\DeferredValueInterface;
 
 trait UsesTestDataTrait
 {
     use NeedsTestFilesTrait;
+    use FakerTrait;
 
     protected static function getDataPath(string $file = ''): string
     {
         return static::getSupportPath('/data' . $file);
     }
 
-    protected static function getConfigValues(): array
+    protected static function getConfigValues(array $extra = []): array
     {
-        $data = [];
+        static $data;
 
-        foreach (new DirectoryIterator(static::getDataPath()) as $path) {
-            if ($path->isFile()) {
-                $data[$path->getBasename('.php')] = require $path->getPathname();
-            }
-        }
+        $unique = static::createFaker()->unique();
 
-        return $data;
+        $data ??= array_map(
+            fn () => [
+                'key1' => $unique->address(),
+                'key2' => $unique->streetName(),
+                'scalar' => $unique->word(),
+                'array' => [
+                    'scalar' => $unique->sentence(),
+                    'array' => [
+                        'scalar' => $unique->colorName(),
+                    ],
+                ],
+                'deferred' => new DeferredValueStub(),
+            ],
+            array_flip(['entry1', 'entry2', 'entry3'])
+        );
+
+        return array_merge_recursive($data, $extra);
     }
 
-    protected static function getDataValue(string $key, ?array $data = null)
+    protected static function getEntryValue(string $key, ?array $data = null): mixed
     {
         $data ??= static::getConfigValues();
 
@@ -37,18 +52,28 @@ trait UsesTestDataTrait
         return $data;
     }
 
-    protected static function getMainConfigRoot(): string
+    protected static function getResolvedConfigValues(array $extra = []): array
     {
-        return 'data';
+        return static::resolveDeferredValues(static::getConfigValues($extra));
     }
 
-    protected static function getDeferrableConfigKey(): string
+    protected static function getResolvedEntryValue(string $key, ?array $data = null): mixed
     {
-        return 'data.deferred';
+        return static::resolveDeferredValues(
+            static::getEntryValue($key, $data)
+        );
     }
 
-    protected static function getUndefinedConfigKey(): string
+    protected static function resolveDeferredValues(array $config): array
     {
-        return 'data.undefined';
+        $stub = new ConfigStub();
+
+        array_walk_recursive($config, function (&$entry) use ($stub) {
+            $entry = $entry instanceof DeferredValueInterface
+                ? $entry->resolve($stub)
+                : $entry;
+        }, $config);
+
+        return $config;
     }
 }

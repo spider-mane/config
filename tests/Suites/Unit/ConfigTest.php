@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Suites\Unit;
 
 use Error;
+use PHPUnit\Framework\MockObject\MockObject;
 use Tests\Support\Concerns\UsesTestDataTrait;
 use Tests\Support\UnitTestCase;
 use UnexpectedValueException;
@@ -15,29 +16,36 @@ class ConfigTest extends UnitTestCase
 {
     use UsesTestDataTrait;
 
+    protected const DEFERRABLE = DeferredValueInterface::class;
+
     protected Config $sut;
+
+    /**
+     * @var DeferredValueInterface&MockObject
+     */
+    protected DeferredValueInterface $deferred;
+
+    public static function getFileData(string $file): array
+    {
+        return static::getEntryValue(basename($file, '.php'));
+    }
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->sut = new Config($this->getDataPath());
+        $this->deferred = $this->getDeferredMock();
+
+        $this->sut = new Config($this->getConfigValues());
     }
 
-    protected function getFullyResolvedConfigValues(): array
+    /**
+     * @return DeferredValueInterface&MockObject
+     */
+    protected function getDeferredMock(): MockObject
     {
-        return $this->resolveDeferredValues($this->getConfigValues());
-    }
-
-    protected function resolveDeferredValues(array $config): array
-    {
-        array_walk_recursive($config, function (&$entry) {
-            $entry = $entry instanceof DeferredValueInterface
-                ? $entry->resolve(new Config($this->getDataPath()))
-                : $entry;
-        }, $config);
-
-        return $config;
+        // @phpstan-ignore-next-line
+        return $this->getMockBuilder(static::DEFERRABLE)->getMock();
     }
 
     /**
@@ -45,7 +53,7 @@ class ConfigTest extends UnitTestCase
      */
     public function it_contains_all_provided_data()
     {
-        $this->assertSame($this->getFullyResolvedConfigValues(), $this->sut->all());
+        $this->assertEquals($this->getResolvedConfigValues(), $this->sut->all());
     }
 
     /**
@@ -53,9 +61,9 @@ class ConfigTest extends UnitTestCase
      */
     public function it_defaults_to_an_empty_array_when_instantiated_without_providing_a_value()
     {
-        $sut = new Config();
+        $this->sut = new Config();
 
-        $result = $sut->all();
+        $result = $this->sut->all();
 
         $this->assertIsArray($result);
         $this->assertEmpty($result);
@@ -67,11 +75,12 @@ class ConfigTest extends UnitTestCase
     public function it_can_be_constructed_by_providing_an_array()
     {
         # Arrange
-        $data = $this->getFullyResolvedConfigValues();
-        $sut = new Config($data);
+        $data = $this->getResolvedConfigValues();
+
+        $this->sut = new Config($data);
 
         # Act
-        $result = $sut->all();
+        $result = $this->sut->all();
 
         # Assert
         $this->assertSame($data, $result);
@@ -82,12 +91,12 @@ class ConfigTest extends UnitTestCase
      */
     public function it_returns_expected_value_for_keys_when_constructed_with_an_array()
     {
-        $key = 'data.scalar';
-        $sut = new Config($this->getFullyResolvedConfigValues());
+        $key = 'entry1.scalar';
+        $sut = new Config($this->getConfigValues());
 
         $result = $sut->get($key);
 
-        $this->assertSame($this->getDataValue($key), $result);
+        $this->assertSame($this->getEntryValue($key), $result);
     }
 
     /**
@@ -95,11 +104,13 @@ class ConfigTest extends UnitTestCase
      */
     public function it_can_be_instantiated_by_providing_a_filename()
     {
-        $sut = new Config($this->getDataPath('/file.php'));
+        $expected = static::getResolvedEntryValue('entry1');
 
-        $result = $sut->all();
+        $this->sut = new Config($this->getDataPath('/entry1.php'));
 
-        $this->assertSame($this->getDataValue('file'), $result);
+        $result = $this->sut->all();
+
+        $this->assertSame($expected, $result);
     }
 
     /**
@@ -133,15 +144,15 @@ class ConfigTest extends UnitTestCase
 
     public function delimitedNotationData()
     {
-        $dotScalar = 'data.scalar';
-        $dotArray = 'data.array';
+        $dotScalar = 'entry1.scalar';
+        $dotArray = 'entry1.array';
 
         return [
-            'delimiter=dot type=scalar' => [$dotScalar, $this->getDataValue($dotScalar)],
-            'delimiter=dot type=array' => [$dotArray, $this->getDataValue($dotArray)],
+            'delimiter=dot type=scalar' => [$dotScalar, $this->getEntryValue($dotScalar)],
+            'delimiter=dot type=array' => [$dotArray, $this->getEntryValue($dotArray)],
 
-            'delimiter=slash type=scalar' => ['data/scalar', $this->getDataValue($dotScalar)],
-            'delimiter=slash type=array' => ['data/array', $this->getDataValue($dotArray)],
+            'delimiter=slash type=scalar' => ['entry1/scalar', $this->getEntryValue($dotScalar)],
+            'delimiter=slash type=array' => ['entry1/array', $this->getEntryValue($dotArray)],
         ];
     }
 
@@ -162,7 +173,7 @@ class ConfigTest extends UnitTestCase
     {
         return [
             'present=true' => [
-                'key' => 'data.scalar',
+                'key' => 'entry1.scalar',
                 'valid' => true,
             ],
             'present=false' => [
@@ -177,10 +188,10 @@ class ConfigTest extends UnitTestCase
      */
     public function it_can_retrieve_from_a_cascade_of_keys_without_error()
     {
-        $invalidKey = 'data.array.array.scalar.sub3a';
-        $validKey = 'data.array.array.scalar';
+        $invalidKey = 'entry1.array.array.scalar.sub3a';
+        $validKey = 'entry1.array.array.scalar';
         $cascade = [$invalidKey, $validKey];
-        $expected = $this->getDataValue($validKey);
+        $expected = $this->getEntryValue($validKey);
 
         foreach ($cascade as $key) {
             if ($this->sut->has($key)) {
@@ -201,7 +212,7 @@ class ConfigTest extends UnitTestCase
      */
     public function it_returns_an_array_when_requested_value_is_an_array()
     {
-        $this->assertIsArray($this->sut->get('data.array'));
+        $this->assertIsArray($this->sut->get('entry1.array'));
     }
 
     /**
@@ -226,12 +237,17 @@ class ConfigTest extends UnitTestCase
      */
     public function it_resolves_deferred_values_on_request()
     {
-        $key = $this->getDeferrableConfigKey();
-        $deferrable = $this->getDataValue($key);
+        $key = 'entry1.deferred';
+        $value = $this->unique->sentence();
 
-        $resolved = $deferrable->resolve(new Config($this->getDataPath()));
+        $data = $this->getConfigValues();
+        $data['entry1']['deferred'] = $this->deferred;
 
-        $this->assertSame($resolved, $this->sut->get($key));
+        $this->deferred->method('resolve')->willReturn($value);
+
+        $this->sut = new Config($data);
+
+        $this->assertSame($value, $this->sut->get($key));
     }
 
     /**
@@ -243,12 +259,17 @@ class ConfigTest extends UnitTestCase
         array $args = [],
         ?string $from = null
     ) {
-        $unresolved = $this->getConfigValues();
-        $resolved = $this->getFullyResolvedConfigValues();
+        $unresolved = $this->getConfigValues([
+            'deferred' => $this->deferred,
+        ]);
+
+        $resolved = $this->resolveDeferredValues($unresolved);
 
         if (isset($from)) {
-            $resolved = $this->getDataValue($from, $resolved);
+            $resolved = $this->getEntryValue($from, $resolved);
         }
+
+        $this->sut = new Config($unresolved);
 
         $result = $this->performSystemAction($this->sut, $method, $args);
 
@@ -264,8 +285,8 @@ class ConfigTest extends UnitTestCase
         return [
             $this->mut('get') => [
                 'method' => 'get',
-                'args' => ['data'],
-                'from' => 'data',
+                'args' => ['deferred'],
+                'from' => 'deferred',
             ],
             $this->mut('all') => [
                 'method' => 'all',
@@ -293,13 +314,13 @@ class ConfigTest extends UnitTestCase
 
         # Act
         $this->sut->set($set, $value);
-        $array = $this->performSystemAction($this->sut, $method, $args);
+        $result = $this->performSystemAction($this->sut, $method, $args);
 
         # Smoke
-        $this->assertIsArray($array, 'value retrieved from provided method must be an array');
+        $this->assertIsArray($result, 'value retrieved from provided method must be an array');
 
         # Assert
-        $this->assertSame($this->getDataValue($find, $array), $value);
+        $this->assertSame($this->getEntryValue($find, $result), $value);
     }
 
     public function postInitiationSetData(): array
@@ -343,24 +364,24 @@ class ConfigTest extends UnitTestCase
     {
         return [
             'startDepth=1, updateDepth=0' => [
-                'get' => 'data.array',
-                'set' => 'data.array',
+                'get' => 'entry1.array',
+                'set' => 'entry1.array',
             ],
             'startDepth=1, updateDepth=1' => [
-                'get' => 'data.array',
-                'set' => 'data.array.scalar',
+                'get' => 'entry1.array',
+                'set' => 'entry1.array.scalar',
             ],
             'startDepth=1, updateDepth=2' => [
-                'get' => 'data.array',
-                'set' => 'data.array.array.scalar',
+                'get' => 'entry1.array',
+                'set' => 'entry1.array.array.scalar',
             ],
             'startDepth=2, updateDepth=0' => [
-                'get' => 'data.array.array',
-                'set' => 'data.array.array',
+                'get' => 'entry1.array.array',
+                'set' => 'entry1.array.array',
             ],
             'startDepth=2, updateDepth=1' => [
-                'get' => 'data.array.array',
-                'set' => 'data.array.array.scalar',
+                'get' => 'entry1.array.array',
+                'set' => 'entry1.array.array.scalar',
             ],
         ];
     }
@@ -373,7 +394,7 @@ class ConfigTest extends UnitTestCase
         # Arrange
         $original = $this->unique->word;
         $updated = $this->unique->word;
-        $arrayKey = 'data.undefined';
+        $arrayKey = 'entry1.undefined';
         $itemKey = 'key';
         $configKey = $arrayKey . '.' . $itemKey;
 
@@ -411,10 +432,10 @@ class ConfigTest extends UnitTestCase
     {
         return [
             'provided=scalar' => [
-                'get' => 'data.scalar',
+                'get' => 'entry1.scalar',
             ],
             'provided=deferred' => [
-                'get' => 'data.deferred',
+                'get' => 'entry1.deferred',
             ],
         ];
     }
@@ -427,23 +448,24 @@ class ConfigTest extends UnitTestCase
         string $source
     ) {
         # Arrange
-        $base = 'debug';
+        $base = 'entry1';
 
         $toCache = "$base.key1";
-        $cachedArray = [$toCache => $this->getDataValue($toCache)];
+        $cachedArray = [$toCache => $this->getEntryValue($toCache)];
 
         $providedArray = $this->getConfigValues();
-        $resolvedArray = $this->getFullyResolvedConfigValues();
+
+        $resolvedArray = $this->resolveDeferredValues($providedArray);
+
+        $path = null;
+        $storedArray = $providedArray;
 
         if ('directory' === $source) {
             $path = $this->getDataPath();
-            $storedArray = [$base => $this->getDataValue($base)];
+            $storedArray = [$base => $this->getEntryValue($base)];
 
             $this->sut = new Config($path);
         } elseif ('array' === $source) {
-            $path = null;
-            $storedArray = $this->getConfigValues();
-
             $this->sut = new Config($storedArray);
         }
 
@@ -451,12 +473,11 @@ class ConfigTest extends UnitTestCase
         $this->sut->get($toCache);
 
         $result = $this->sut->__debugInfo();
+        $data = $result['data'];
 
         # Assert
         $this->assertArrayHasKey('path', $result);
         $this->assertArrayHasKey('data', $result);
-
-        $data = $result['data'];
 
         $this->assertArrayHasKey('cached', $data);
         $this->assertArrayHasKey('stored', $data);
@@ -475,6 +496,41 @@ class ConfigTest extends UnitTestCase
         return [
             'source=directory' => ['directory'],
             'source=array' => ['array'],
+        ];
+    }
+
+    /**
+     * @test
+     * @dataProvider nestedSetValuesData
+     */
+    public function it_can_set_nested_values_without_overriding_parent(mixed $nested)
+    {
+        $key = 'entry1.set';
+        $expected = $this->getResolvedConfigValues([
+            'entry1' => [
+                'set' => $nested,
+            ],
+        ]);
+
+        $this->sut->set($key, $nested);
+
+        $this->assertSame($expected, $this->sut->all());
+    }
+
+    public function nestedSetValuesData(): array
+    {
+        $this->initFaker();
+
+        $deferred = $this->getDeferredMock();
+        $deferred->method('resolve')->willReturn($this->unique->colorName());
+
+        return [
+            'type=scalar' => [$this->unique->sentence()],
+            'type=array' => [[
+                'key1' => $this->unique->address(),
+                'key2' => $this->unique->userName(),
+            ]],
+            'type=deferred' => [$deferred],
         ];
     }
 }

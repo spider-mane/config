@@ -1,8 +1,12 @@
 # Dev and CI
 *.cache
+.playground
+.playground.php
 /build/
 /dist/
 /logs/
+/temp/
+captainhook.config.json
 cghooks.lock
 
 # Composer

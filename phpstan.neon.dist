@@ -10,6 +10,9 @@ parameters:
     - src
     - tests
 
+  bootstrapFiles:
+    - tests/bootstrap.php
+
   ignoreErrors:
     - '#^Unsafe usage of new static\(\).$#'
     - '#^Undefined variable: \$this$#'
