@@ -4,7 +4,7 @@ services:
       target: app-interactive
       args:
         LANG: "${LANG:-en_US.UTF-8}"
-        TZ: 'America/New_York'
+        TZ: "America/New_York"
         UNMINIMIZE: true
         GIT_DEFAULT_BRANCH: master
         GIT_USER:
@@ -17,6 +17,10 @@ services:
       - ".:/var/www/html"
       # Dependencies
       - "app.composer:/var/www/html/vendor"
+      # Vs Code Server
+      - "app.vscode:/home/config/.vscode-server"
 volumes:
+  app.vscode:
+    driver: local
   app.composer:
     driver: local
