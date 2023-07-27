@@ -1,31 +1,38 @@
 <?xml version="1.0"?>
-<ruleset name="config">
-  <description>Coding standard for webtheory/config</description>
-
-  <!-- File paths -->
+<ruleset
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:noNamespaceSchemaLocation="vendor/squizlabs/php_codesniffer/phpcs.xsd"
+  name="Leonidas"
+>
+  <!-- Paths -->
   <file>./src</file>
+  <file>./bin</file>
+  <file>./tests</file>
 
   <!-- Args -->
   <arg value="p"/>
   <arg value="s"/>
   <arg name="colors"/>
+  <arg name="cache" value="build/phpcs/.cache"/>
+  <arg name="basepath" value="."/>
+  <arg name="extensions" value="php"/>
 
   <!-- Config -->
-  <config name="ignore_warnings_on_exit"
-    value="1"/>
+  <config name="ignore_warnings_on_exit" value="1"/>
+  <config name="ignore_errors_on_exit" value="1"/>
+  <config name="default_standard" value="PSR12"/>
 
-  <config name="ignore_errors_on_exit"
-    value="1"/>
-
-  <config name="default_standard"
-    value="PSR12"/>
-
-  <!-- Use the PSR-12 Standard-->
+  <!-- Rules -->
   <rule ref="PSR12"/>
+  <rule ref="Suin.Classes.PSR4"/>
 
-  <!-- Disable Default Squiz Checks -->
+  <!-- Disable default Squiz Standard -->
   <rule ref="Squiz">
     <exclude name="Squiz"/>
   </rule>
 
+  <!-- Disable camel case method name rule for tests -->
+  <rule ref="PSR1.Methods.CamelCapsMethodName">
+    <exclude-pattern>./tests/Suites</exclude-pattern>
+  </rule>
 </ruleset>

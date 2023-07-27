@@ -24,6 +24,7 @@
   },
   "require-dev": {
     "captainhook/captainhook": "^5.10",
+    "dealerdirect/phpcodesniffer-composer-installer": "^0.7.2",
     "fakerphp/faker": "^1.16",
     "friendsofphp/php-cs-fixer": "^3.3",
     "hassankhan/config": "^3.0",
@@ -37,9 +38,11 @@
     "psy/psysh": "^0.11.12",
     "spatie/phpunit-watcher": "^1.12",
     "squizlabs/php_codesniffer": "^3.5",
+    "suin/phpcs-psr4-sniff": "^3.0",
     "vimeo/psalm": "^5.6",
     "vlucas/phpdotenv": "^5.4",
-    "webtheory/exterminate": "@dev"
+    "webtheory/exterminate": "@dev",
+    "webtheory/path-builder": "^0.2.0"
   },
   "suggest": {
     "oscarotero/env": "Needed to use env function with \"$default\" parameter"
@@ -74,7 +77,7 @@
     "setup": [
       "composer install",
       "cp -n .env.example .env",
-      "bin/build-paths"
+      "vendor/bin/build-paths"
     ],
     "style": [
       "vendor/bin/php-cs-fixer fix --verbose",
@@ -85,14 +88,17 @@
     "sort-packages": true,
     "process-timeout": 0,
     "allow-plugins": {
-      "composer/package-versions-deprecated": true
+      "composer/package-versions-deprecated": true,
+      "dealerdirect/phpcodesniffer-composer-installer": true
     }
   },
   "extra": {
     "build-paths": {
       "build": {
-        "phpunit": {},
-        "php-cs-fixer": {}
+        "php-cs-fixer": {},
+        "phpcs": {},
+        "phpstan": {},
+        "phpunit": {}
       },
       "logs": {}
     }
