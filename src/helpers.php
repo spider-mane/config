@@ -11,12 +11,12 @@ use WebTheory\Config\Deferred\Reference\Mix;
 use WebTheory\Config\Deferred\Reference\Selection;
 use WebTheory\Config\Deferred\Reference\Value;
 
-function env(string $name, mixed $default): mixed
+function env(string $name, mixed $default = null): mixed
 {
     return Env::get($name) ?? $default;
 }
 
-function get(string $key, $default = null): Value
+function ref(string $key, $default = null): Value
 {
     return new Value($key, $default);
 }
