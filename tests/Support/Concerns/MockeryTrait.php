@@ -17,9 +17,4 @@ trait MockeryTrait
     {
         return Mockery::mock($class, ...$interfaces);
     }
-
-    protected function closeMockery(): void
-    {
-        Mockery::close();
-    }
 }

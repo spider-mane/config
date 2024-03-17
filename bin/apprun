@@ -1,3 +1,5 @@
 #!/usr/bin/env bash
 
-docker compose exec app "$@"
+readonly user="config"
+
+docker compose exec -u "$user" app "$@"

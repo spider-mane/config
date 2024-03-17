@@ -1,14 +1,10 @@
 FROM ubuntu:22.04 as app
 
-LABEL maintainer="Chris Williams"
-
-EXPOSE 9000
-
 COPY --from=spidermane/trunk * /trunk
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV APP=/app
 
+ENV APP=/app
 VOLUME [ "$APP" ]
 WORKDIR "$APP"
 

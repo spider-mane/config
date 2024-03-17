@@ -10,13 +10,21 @@ use WebTheory\Config\Deferred\Reference\Map;
 use WebTheory\Config\Deferred\Reference\Mix;
 use WebTheory\Config\Deferred\Reference\Selection;
 use WebTheory\Config\Deferred\Reference\Value;
+use WebTheory\Config\Helper\EnvDetermined;
 
 function env(string $name, mixed $default = null): mixed
 {
     return Env::get($name) ?? $default;
 }
 
-function ref(string $key, $default = null): Value
+function depends(string $envVar, array $configurations)
+{
+    $helper = new EnvDetermined($envVar);
+
+    return $helper->process($configurations);
+}
+
+function reflect(string $key, $default = null): Value
 {
     return new Value($key, $default);
 }

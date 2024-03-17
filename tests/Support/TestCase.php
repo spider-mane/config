@@ -5,15 +5,19 @@ declare(strict_types=1);
 namespace Tests\Support;
 
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
-use Tests\Support\Concerns\FakerTrait;
-use Tests\Support\Concerns\HelperTrait;
+use Tests\Support\Concerns\AssertionsTrait;
+use Tests\Support\Concerns\FakeGeneratorTrait;
 use Tests\Support\Concerns\MockeryTrait;
+use Tests\Support\Concerns\ProphecyTrait;
+use Tests\Support\Concerns\SystemTrait;
 
 class TestCase extends PHPUnitTestCase
 {
-    use FakerTrait;
-    use HelperTrait;
+    use AssertionsTrait;
+    use FakeGeneratorTrait;
     use MockeryTrait;
+    use ProphecyTrait;
+    use SystemTrait;
 
     protected function setUp(): void
     {
@@ -27,13 +31,6 @@ class TestCase extends PHPUnitTestCase
         parent::tearDown();
 
         $this->closeMockery();
-    }
-
-    protected static function assertArrayIsMap(array $array, string $message = ''): void
-    {
-        static::assertFalse(
-            array_is_list($array),
-            $message ?: 'Failed asserting that array is a map.'
-        );
+        $this->tearDownProphecy();
     }
 }

@@ -19,4 +19,9 @@ class StackedConfig extends AbstractStackedConfig implements ConfigInterface
     {
         $this->base->set($key, $value);
     }
+
+    protected function getPrimaryConfig(): ConfigInterface
+    {
+        return $this->stack[1];
+    }
 }

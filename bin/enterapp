@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-readonly root="$(dirname $(dirname $(realpath $0)))"
-readonly username="config"
+readonly user="config"
+readonly default_shell="zsh"
 
 validate_shell_arg() {
-  shells="sh bash zsh"
+  shells="bash dash rbash sh zsh"
   shell=
 
   for option in $shells; do
@@ -24,7 +24,5 @@ if [ -n "$1" ]; then
   validate_shell_arg "$1"
 fi
 
-shell="${shell:-zsh}"
-
 docker compose up -d --wait &&
-  docker compose exec -u "$username" app "$shell" -il
+  docker compose exec -u "$user" app "${shell:-$default_shell}" -il
